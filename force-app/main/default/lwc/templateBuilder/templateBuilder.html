@@ -1,0 +1,156 @@
+<template>
+    <lightning-card title="Template Builder" icon-name="standard:form">
+        <span slot="actions">
+            <template lwc:if={status}>
+                <lightning-badge label={status} class={statusVariant}></lightning-badge>
+                <span class="slds-m-left_x-small slds-text-body_small">v{version}</span>
+            </template>
+        </span>
+
+        <div class="slds-p-horizontal_medium">
+
+            <template lwc:if={error}>
+                <div class="slds-text-color_error slds-m-bottom_small">{error}</div>
+            </template>
+
+            <template lwc:if={isBusy}>
+                <lightning-spinner alternative-text="Working" size="small"></lightning-spinner>
+            </template>
+
+            <!-- ============ 1. SCAN ============ -->
+            <template lwc:if={canEdit}>
+                <div class="slds-box slds-m-bottom_medium">
+                    <h3 class="slds-text-heading_small slds-m-bottom_x-small">1. Scan a template file</h3>
+                    <lightning-file-upload
+                        label="Upload PDF / JPEG / PNG"
+                        name="templateFile"
+                        accept={acceptedFormats}
+                        record-id={effectiveId}
+                        onuploadfinished={handleUploadFinished}>
+                    </lightning-file-upload>
+                    <template lwc:if={isScanning}>
+                        <div class="slds-m-top_x-small slds-text-color_weak">
+                            <lightning-spinner alternative-text="Scanning" size="x-small"></lightning-spinner>
+                            Scanning&#8230; (waiting for Vision via n8n)
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <!-- ============ 2. AI PROMPT ============ -->
+            <template lwc:if={canEdit}>
+                <div class="slds-box slds-m-bottom_medium">
+                    <h3 class="slds-text-heading_small slds-m-bottom_x-small">2. Edit with AI</h3>
+                    <lightning-textarea
+                        label="Describe the change"
+                        value={prompt}
+                        placeholder="e.g. Add a serial number field to General, move readings above notes"
+                        onchange={handlePromptChange}>
+                    </lightning-textarea>
+                    <lightning-button
+                        label="Apply AI Edit"
+                        variant="brand"
+                        onclick={handleAiEdit}
+                        disabled={isBusy}
+                        class="slds-m-top_x-small">
+                    </lightning-button>
+                </div>
+            </template>
+
+            <!-- ============ 3. MANUAL EDIT ============ -->
+            <template lwc:if={hasSchema}>
+                <div class="slds-box slds-m-bottom_medium">
+                    <h3 class="slds-text-heading_small slds-m-bottom_x-small">3. Manual edit</h3>
+
+                    <template lwc:if={canEdit}>
+                        <template for:each={sectionModels} for:item="section">
+                            <div key={section.id} class="slds-m-bottom_small">
+                                <div class="slds-text-title_caps slds-m-bottom_xx-small">{section.title}</div>
+                                <template for:each={section.fields} for:item="field">
+                                    <c-schema-field-editor
+                                        key={field.key}
+                                        field={field}
+                                        is-first={field.isFirst}
+                                        is-last={field.isLast}
+                                        onfieldchange={handleFieldChange}
+                                        onmoveup={handleMoveUp}
+                                        onmovedown={handleMoveDown}
+                                        onremove={handleRemoveField}>
+                                    </c-schema-field-editor>
+                                </template>
+                                <lightning-button
+                                    label="Add Field"
+                                    icon-name="utility:add"
+                                    data-section={section.id}
+                                    onclick={handleAddField}
+                                    class="slds-m-top_xx-small">
+                                </lightning-button>
+                            </div>
+                        </template>
+
+                        <lightning-button
+                            label="Save Schema"
+                            variant="neutral"
+                            onclick={handleSaveSchema}
+                            disabled={isBusy}
+                            class="slds-m-top_x-small">
+                        </lightning-button>
+                    </template>
+
+                    <template lwc:if={isPublished}>
+                        <div class="slds-text-color_weak">
+                            Published templates are locked. Revert to Draft to edit.
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <!-- ============ PREVIEW ============ -->
+            <template lwc:if={hasSchema}>
+                <div class="slds-box slds-m-bottom_medium">
+                    <h3 class="slds-text-heading_small slds-m-bottom_x-small">Preview</h3>
+                    <template for:each={previewSections} for:item="section">
+                        <div key={section.id} class="slds-box slds-box_x-small slds-m-bottom_small">
+                            <div class="slds-text-title_caps slds-m-bottom_xx-small">{section.title}</div>
+                            <template for:each={section.rows} for:item="row">
+                                <div key={row.id} class="slds-grid slds-gutters slds-wrap slds-m-bottom_xx-small">
+                                    <template for:each={row.fields} for:item="field">
+                                        <div key={field.key} class={field.sizeClass}>
+                                            <template lwc:if={field.isSignature}>
+                                                <label class="slds-form-element__label">{field.label}</label>
+                                                <div class="sig-placeholder">Signature: {field.signerRole}</div>
+                                            </template>
+                                            <template lwc:else>
+                                                <c-form-field field={field} disabled="true"></c-form-field>
+                                            </template>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </template>
+        </div>
+
+        <!-- ============ 4. PUBLISH BAR ============ -->
+        <div slot="footer" class="slds-grid slds-grid_align-end">
+            <template lwc:if={canPublish}>
+                <lightning-button
+                    label="Publish"
+                    variant="success"
+                    onclick={handlePublish}
+                    disabled={isBusy}>
+                </lightning-button>
+            </template>
+            <template lwc:if={isPublished}>
+                <lightning-button
+                    label="Revert to Draft (new version)"
+                    variant="brand"
+                    onclick={handleRevert}
+                    disabled={isBusy}>
+                </lightning-button>
+            </template>
+        </div>
+    </lightning-card>
+</template>

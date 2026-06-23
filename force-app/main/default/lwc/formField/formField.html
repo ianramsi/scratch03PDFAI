@@ -1,0 +1,197 @@
+<template>
+    <!-- TEXT -->
+    <lightning-input
+        lwc:if={isText}
+        type="text"
+        label={field.label}
+        value={value}
+        required={required}
+        disabled={disabled}
+        placeholder={field.placeholder}
+        max-length={field.maxLength}
+        onchange={handleScalarChange}>
+    </lightning-input>
+
+    <!-- TEXTAREA -->
+    <lightning-textarea
+        lwc:elseif={isTextarea}
+        label={field.label}
+        value={value}
+        required={required}
+        disabled={disabled}
+        max-length={field.maxLength}
+        onchange={handleScalarChange}>
+    </lightning-textarea>
+
+    <!-- NUMBER -->
+    <lightning-input
+        lwc:elseif={isNumber}
+        type="number"
+        label={field.label}
+        value={value}
+        required={required}
+        disabled={disabled}
+        onchange={handleScalarChange}>
+    </lightning-input>
+
+    <!-- DATE -->
+    <lightning-input
+        lwc:elseif={isDate}
+        type="date"
+        label={field.label}
+        value={value}
+        required={required}
+        disabled={disabled}
+        onchange={handleScalarChange}>
+    </lightning-input>
+
+    <!-- TIME -->
+    <lightning-input
+        lwc:elseif={isTime}
+        type="time"
+        label={field.label}
+        value={value}
+        required={required}
+        disabled={disabled}
+        onchange={handleScalarChange}>
+    </lightning-input>
+
+    <!-- CHECKBOX -->
+    <lightning-input
+        lwc:elseif={isCheckbox}
+        type="checkbox"
+        label={field.label}
+        checked={value}
+        disabled={disabled}
+        onchange={handleScalarChange}>
+    </lightning-input>
+
+    <!-- PICKLIST -->
+    <lightning-combobox
+        lwc:elseif={isPicklist}
+        label={field.label}
+        value={value}
+        options={picklistOptions}
+        required={required}
+        disabled={disabled}
+        onchange={handleScalarChange}>
+    </lightning-combobox>
+
+    <!-- TABLE -->
+    <div lwc:elseif={isTable} class="tbl">
+        <label class="slds-form-element__label">{field.label}</label>
+        <table class="slds-table slds-table_bordered slds-table_cell-buffer">
+            <thead>
+                <tr class="slds-line-height_reset">
+                    <template for:each={field.columns} for:item="col">
+                        <th key={col.id} scope="col">
+                            <div class="slds-truncate" title={col.label}>{col.label}</div>
+                        </th>
+                    </template>
+                    <th scope="col" class="slds-cell-shrink"></th>
+                </tr>
+            </thead>
+            <tbody>
+                <template for:each={tableRows} for:item="row">
+                    <tr key={row.key}>
+                        <template for:each={row.cells} for:item="cell">
+                            <td key={cell.key}>
+                                <lightning-input
+                                    lwc:if={cell.isText}
+                                    type="text"
+                                    variant="label-hidden"
+                                    label={cell.label}
+                                    value={cell.value}
+                                    data-row={row.index}
+                                    data-col={cell.colId}
+                                    data-type={cell.type}
+                                    disabled={disabled}
+                                    onchange={handleTableCellChange}>
+                                </lightning-input>
+                                <lightning-input
+                                    lwc:elseif={cell.isNumber}
+                                    type="number"
+                                    variant="label-hidden"
+                                    label={cell.label}
+                                    value={cell.value}
+                                    data-row={row.index}
+                                    data-col={cell.colId}
+                                    data-type={cell.type}
+                                    disabled={disabled}
+                                    onchange={handleTableCellChange}>
+                                </lightning-input>
+                                <lightning-input
+                                    lwc:elseif={cell.isDate}
+                                    type="date"
+                                    variant="label-hidden"
+                                    label={cell.label}
+                                    value={cell.value}
+                                    data-row={row.index}
+                                    data-col={cell.colId}
+                                    data-type={cell.type}
+                                    disabled={disabled}
+                                    onchange={handleTableCellChange}>
+                                </lightning-input>
+                                <lightning-input
+                                    lwc:elseif={cell.isTime}
+                                    type="time"
+                                    variant="label-hidden"
+                                    label={cell.label}
+                                    value={cell.value}
+                                    data-row={row.index}
+                                    data-col={cell.colId}
+                                    data-type={cell.type}
+                                    disabled={disabled}
+                                    onchange={handleTableCellChange}>
+                                </lightning-input>
+                                <lightning-input
+                                    lwc:elseif={cell.isCheckbox}
+                                    type="checkbox"
+                                    variant="label-hidden"
+                                    label={cell.label}
+                                    checked={cell.value}
+                                    data-row={row.index}
+                                    data-col={cell.colId}
+                                    data-type={cell.type}
+                                    disabled={disabled}
+                                    onchange={handleTableCellChange}>
+                                </lightning-input>
+                                <lightning-combobox
+                                    lwc:elseif={cell.isPicklist}
+                                    variant="label-hidden"
+                                    label={cell.label}
+                                    value={cell.value}
+                                    options={cell.options}
+                                    data-row={row.index}
+                                    data-col={cell.colId}
+                                    data-type={cell.type}
+                                    disabled={disabled}
+                                    onchange={handleTableCellChange}>
+                                </lightning-combobox>
+                            </td>
+                        </template>
+                        <td class="slds-cell-shrink">
+                            <lightning-button-icon
+                                icon-name="utility:delete"
+                                variant="bare"
+                                alternative-text="Remove row"
+                                data-row={row.index}
+                                disabled={disabled}
+                                onclick={handleRemoveRow}>
+                            </lightning-button-icon>
+                        </td>
+                    </tr>
+                </template>
+            </tbody>
+        </table>
+        <lightning-button
+            lwc:if={canAddRow}
+            label="Add Row"
+            icon-name="utility:add"
+            onclick={handleAddRow}
+            class="slds-m-top_x-small">
+        </lightning-button>
+    </div>
+
+    <!-- SIGNATURE: handled by parent via signaturePad; nothing rendered here. -->
+</template>

@@ -1,0 +1,93 @@
+<template>
+    <div class="slds-box slds-box_x-small slds-m-bottom_x-small fld">
+        <div class="slds-grid slds-gutters slds-wrap slds-grid_vertical-align-end">
+            <div class="slds-col slds-size_4-of-12">
+                <lightning-input
+                    type="text"
+                    label="Label"
+                    value={field.label}
+                    onchange={handleLabelChange}>
+                </lightning-input>
+            </div>
+            <div class="slds-col slds-size_3-of-12">
+                <lightning-combobox
+                    label="Type"
+                    value={field.type}
+                    options={typeOptions}
+                    onchange={handleTypeChange}>
+                </lightning-combobox>
+            </div>
+            <div class="slds-col slds-size_2-of-12">
+                <lightning-combobox
+                    label="Width"
+                    value={colSpanValue}
+                    options={colSpanOptions}
+                    onchange={handleColSpanChange}>
+                </lightning-combobox>
+            </div>
+            <div class="slds-col slds-size_2-of-12 slds-p-bottom_x-small">
+                <lightning-input
+                    type="checkbox"
+                    label="Required"
+                    checked={field.required}
+                    onchange={handleRequiredChange}>
+                </lightning-input>
+            </div>
+            <div class="slds-col slds-size_1-of-12 slds-text-align_right">
+                <lightning-button-icon
+                    icon-name="utility:up"
+                    variant="bare"
+                    alternative-text="Move up"
+                    disabled={isFirst}
+                    onclick={handleMoveUp}>
+                </lightning-button-icon>
+                <lightning-button-icon
+                    icon-name="utility:down"
+                    variant="bare"
+                    alternative-text="Move down"
+                    disabled={isLast}
+                    onclick={handleMoveDown}>
+                </lightning-button-icon>
+                <lightning-button-icon
+                    icon-name="utility:delete"
+                    variant="bare"
+                    alternative-text="Remove"
+                    onclick={handleRemove}>
+                </lightning-button-icon>
+            </div>
+        </div>
+
+        <!-- id (read-only: immutable by contract) -->
+        <div class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small">
+            id: {field.id}
+        </div>
+
+        <!-- picklist options -->
+        <template lwc:if={isPicklist}>
+            <lightning-textarea
+                label="Options (one per line)"
+                value={optionsText}
+                onchange={handleOptionsChange}
+                class="slds-m-top_x-small">
+            </lightning-textarea>
+        </template>
+
+        <!-- signer role -->
+        <template lwc:if={isSignature}>
+            <lightning-combobox
+                label="Signer Role"
+                value={field.signerRole}
+                options={signerRoleOptions}
+                onchange={handleSignerRoleChange}
+                class="slds-m-top_x-small">
+            </lightning-combobox>
+        </template>
+
+        <!-- table columns: edited as raw JSON note for MVP -->
+        <template lwc:if={isTable}>
+            <div class="slds-text-body_small slds-text-color_weak slds-m-top_x-small">
+                Table columns are edited via AI prompt or raw schema for now.
+            </div>
+        </template>
+    </div>
+</template>

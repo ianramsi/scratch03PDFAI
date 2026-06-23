@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Field_Id__c</fullName>
+    <label>Field Id</label>
+    <description>Schema field id of the signature field this fulfills (e.g. f_sig_engineer).</description>
+    <length>64</length>
+    <type>Text</type>
+    <required>true</required>
+</CustomField>

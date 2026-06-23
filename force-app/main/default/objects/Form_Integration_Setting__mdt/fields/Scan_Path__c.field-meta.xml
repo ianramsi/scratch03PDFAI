@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Scan_Path__c</fullName>
+    <label>Scan Path</label>
+    <description>n8n webhook path for Vision template scan. Appended to the n8n Named Credential base URL.</description>
+    <type>Text</type>
+    <length>255</length>
+</CustomField>

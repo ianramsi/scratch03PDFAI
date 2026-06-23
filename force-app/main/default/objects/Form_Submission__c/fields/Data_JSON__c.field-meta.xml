@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Data_JSON__c</fullName>
+    <label>Data JSON</label>
+    <description>Flat fieldId-to-value map of answers. Secondary data; PDF is source of truth.</description>
+    <length>131072</length>
+    <type>LongTextArea</type>
+    <visibleLines>10</visibleLines>
+</CustomField>

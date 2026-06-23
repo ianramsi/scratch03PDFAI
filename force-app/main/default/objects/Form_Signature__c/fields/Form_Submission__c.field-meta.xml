@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Form_Submission__c</fullName>
+    <label>Form Submission</label>
+    <description>Master-detail: a signature has no meaning without its submission; cascade delete is correct here.</description>
+    <type>MasterDetail</type>
+    <referenceTo>Form_Submission__c</referenceTo>
+    <relationshipLabel>Signatures</relationshipLabel>
+    <relationshipName>Signatures</relationshipName>
+    <reparentableMasterDetail>false</reparentableMasterDetail>
+    <writeRequiresMasterRead>false</writeRequiresMasterRead>
+</CustomField>

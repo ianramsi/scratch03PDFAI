@@ -1,0 +1,32 @@
+<template>
+    <div class="sig-wrapper">
+        <canvas
+            lwc:ref="canvas"
+            class="sig-canvas"
+            onpointerdown={handlePointerDown}
+            onpointermove={handlePointerMove}
+            onpointerup={handlePointerUp}
+            onpointerleave={handlePointerUp}>
+        </canvas>
+        <div class="sig-actions">
+            <lightning-button
+                label="Clear"
+                onclick={handleClear}
+                disabled={disabled}
+                variant="neutral">
+            </lightning-button>
+            <lightning-button
+                label="Save Signature"
+                onclick={handleSave}
+                disabled={disabled}
+                variant="brand"
+                class="slds-m-left_x-small">
+            </lightning-button>
+            <lightning-spinner
+                lwc:if={isSaving}
+                alternative-text="Saving"
+                size="small">
+            </lightning-spinner>
+        </div>
+    </div>
+</template>

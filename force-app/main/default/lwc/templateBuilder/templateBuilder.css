@@ -1,0 +1,9 @@
+:host { display: block; }
+.sig-placeholder {
+    border: 1px dashed var(--slds-g-color-border-base-1, #c9c9c9);
+    border-radius: 4px;
+    padding: 1.5rem;
+    text-align: center;
+    color: var(--slds-g-color-neutral-base-50, #747474);
+    background: #fff;
+}

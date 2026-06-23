@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Template_Version__c</fullName>
+    <label>Template Version</label>
+    <description>Version of the template used at fill time. Audit reference only; Pilihan A = no re-render.</description>
+    <type>Number</type>
+    <precision>9</precision>
+    <scale>0</scale>
+    <required>true</required>
+</CustomField>

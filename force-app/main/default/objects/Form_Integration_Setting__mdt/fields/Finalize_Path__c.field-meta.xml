@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Finalize_Path__c</fullName>
+    <label>Finalize Path</label>
+    <description>Spring Boot endpoint path for PDF finalize.</description>
+    <type>Text</type>
+    <length>255</length>
+</CustomField>

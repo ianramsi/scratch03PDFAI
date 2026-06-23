@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Max_File_Bytes__c</fullName>
+    <label>Max File Bytes</label>
+    <description>Reject template uploads larger than this before base64 callout. Guards Apex heap/callout limits (~3MB recommended for inline base64).</description>
+    <type>Number</type>
+    <precision>10</precision>
+    <scale>0</scale>
+</CustomField>

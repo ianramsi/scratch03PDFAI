@@ -1,0 +1,18 @@
+.sig-wrapper {
+    display: inline-block;
+}
+.sig-canvas {
+    width: 320px;
+    height: 120px;
+    border: 1px solid var(--slds-g-color-border-base-1, #c9c9c9);
+    border-radius: 4px;
+    background: #fff;
+    touch-action: none; /* prevent scroll while drawing on touch devices */
+    cursor: crosshair;
+    display: block;
+}
+.sig-actions {
+    margin-top: .5rem;
+    display: flex;
+    align-items: center;
+}

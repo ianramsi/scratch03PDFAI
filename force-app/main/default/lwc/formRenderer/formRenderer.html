@@ -1,0 +1,125 @@
+<template>
+    <lightning-card title="Form" icon-name="standard:form">
+        <div class="slds-p-horizontal_medium">
+
+            <!-- error -->
+            <template lwc:if={error}>
+                <div class="slds-text-color_error slds-m-bottom_small">{error}</div>
+            </template>
+
+            <!-- busy -->
+            <template lwc:if={isBusy}>
+                <lightning-spinner alternative-text="Working" size="small"></lightning-spinner>
+            </template>
+
+            <!-- status badge -->
+            <template lwc:if={status}>
+                <div class="slds-m-bottom_small">
+                    <lightning-badge label={status} class={statusVariant}></lightning-badge>
+                    <template lwc:if={revisionNumber}>
+                        <span class="slds-m-left_small slds-text-body_small">
+                            Revision {revisionNumber}
+                        </span>
+                    </template>
+                </div>
+            </template>
+
+            <!-- rejection notice -->
+            <template lwc:if={showRejection}>
+                <div class="slds-box slds-theme_warning slds-m-bottom_small">
+                    <strong>Rejected:</strong> {rejectionComment}
+                </div>
+            </template>
+
+            <!-- schema render -->
+            <template for:each={sections} for:item="section">
+                <div key={section.id} class="slds-box slds-m-bottom_medium">
+                    <h3 class="slds-text-heading_small slds-m-bottom_small">{section.title}</h3>
+
+                    <template for:each={section.rows} for:item="row">
+                        <div key={row.id} class="slds-grid slds-gutters slds-wrap slds-m-bottom_x-small">
+                            <template for:each={row.fields} for:item="field">
+                                <div key={field.key} class={field.sizeClass}>
+
+                                    <!-- signature field -> signaturePad -->
+                                    <template lwc:if={field.isSignature}>
+                                        <label class="slds-form-element__label">{field.label}</label>
+                                        <c-signature-pad
+                                            role={field.signerRole}
+                                            field-id={field.id}
+                                            disabled={field.signaturePadDisabled}
+                                            onsigned={handleSigned}>
+                                        </c-signature-pad>
+                                    </template>
+
+                                    <!-- all other fields -> formField -->
+                                    <template lwc:else>
+                                        <c-form-field
+                                            field={field}
+                                            value={field.value}
+                                            disabled={field.disabled}
+                                            onvaluechange={handleValueChange}>
+                                        </c-form-field>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <!-- reject comment box (supervisor) -->
+            <template lwc:if={canApproveReject}>
+                <lightning-textarea
+                    lwc:ref="rejectComment"
+                    label="Rejection comment (required to reject)"
+                    class="slds-m-bottom_small">
+                </lightning-textarea>
+            </template>
+        </div>
+
+        <!-- action bar -->
+        <div slot="footer" class="slds-grid slds-grid_align-end">
+            <template lwc:if={canSubmit}>
+                <lightning-button
+                    label="Save Draft"
+                    onclick={handleSave}
+                    class="slds-m-right_x-small">
+                </lightning-button>
+                <lightning-button
+                    label="Submit"
+                    variant="brand"
+                    onclick={handleSubmit}>
+                </lightning-button>
+            </template>
+
+            <template lwc:if={canApproveReject}>
+                <lightning-button
+                    label="Reject"
+                    variant="destructive"
+                    onclick={handleReject}
+                    class="slds-m-right_x-small">
+                </lightning-button>
+                <lightning-button
+                    label="Approve"
+                    variant="success"
+                    onclick={handleApprove}>
+                </lightning-button>
+            </template>
+
+            <template lwc:if={canReopen}>
+                <lightning-button
+                    label="Reopen for Revision"
+                    variant="brand"
+                    onclick={handleReopen}>
+                </lightning-button>
+            </template>
+
+            <template lwc:if={isApproved}>
+                <span class="slds-text-color_success slds-align-middle">
+                    Approved &#8212; official record finalized.
+                </span>
+            </template>
+        </div>
+    </lightning-card>
+</template>

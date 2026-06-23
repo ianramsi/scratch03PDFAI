@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Document_Hash__c</fullName>
+    <label>Document Hash</label>
+    <description>SHA-256 of the final PDF. Integrity proof of the official record.</description>
+    <length>80</length>
+    <type>Text</type>
+</CustomField>

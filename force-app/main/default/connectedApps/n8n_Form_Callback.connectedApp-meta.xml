@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ConnectedApp xmlns="http://soap.sforce.com/2006/04/metadata">
+    <contactEmail>admin@suplo.my.id</contactEmail>
+    <label>n8n Form Callback</label>
+    <!--
+      Connected App used by n8n to authenticate when POSTing the async scan
+      result to /services/apexrest/formschema/v1/callback.
+
+      FLOW: OAuth 2.0 Client Credentials. After deploy:
+        1. Setup > App Manager > n8n Form Callback > Manage Consumer Details
+           -> copy Consumer Key + Secret into n8n credentials (server-side only).
+        2. Edit Policies > enable Client Credentials Flow and select a low-priv
+           integration "Run As" user that holds the Form_Builder_User perm set.
+        3. n8n exchanges key/secret for an access token, sends it as
+           Authorization: Bearer <token> on the callback.
+      The Run-As user's FLS/CRUD (granted via permission set) governs what the
+      callback can write. Keep that user minimally privileged.
+    -->
+    <oauthConfig>
+        <callbackUrl>https://login.salesforce.com/services/oauth2/callback</callbackUrl>
+        <isAdminApproved>true</isAdminApproved>
+        <scopes>Api</scopes>
+        <scopes>RefreshToken</scopes>
+    </oauthConfig>
+    <oauthPolicy>
+        <ipRelaxation>ENFORCE</ipRelaxation>
+        <refreshTokenPolicy>infinite</refreshTokenPolicy>
+    </oauthPolicy>
+</ConnectedApp>

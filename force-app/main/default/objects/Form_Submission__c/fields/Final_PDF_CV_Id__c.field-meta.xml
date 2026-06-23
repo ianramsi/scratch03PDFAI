@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Final_PDF_CV_Id__c</fullName>
+    <label>Final PDF ContentVersion Id</label>
+    <description>ContentVersion Id of the generated official PDF.</description>
+    <length>18</length>
+    <type>Text</type>
+</CustomField>
