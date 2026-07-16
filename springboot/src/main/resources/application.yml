@@ -1,0 +1,44 @@
+server:
+  port: ${PORT:8080}
+  # Keep error responses opaque; we map our own contract errorCodes (stage 2.8).
+  error:
+    include-message: never
+    include-stacktrace: never
+    include-binding-errors: never
+
+spring:
+  application:
+    name: pdf-finalizer
+  jackson:
+    # Contract is strict camelCase across Apex <-> LWC <-> Spring Boot.
+    # Do NOT switch to snake_case — a case mismatch was a real bug in this project.
+    default-property-inclusion: non_null
+
+finalizer:
+  # Shared secret expected in the X-API-Key header. Salesforce sends this via
+  # the springboot_Form Named/External Credential. Required env var — no
+  # hardcoded default. See springboot/.env.example for the variable name.
+  api-key: ${FINALIZER_API_KEY}
+  # Salesforce REST API version used for ContentVersion GET/POST.
+  salesforce-api-version: ${SF_API_VERSION:61.0}
+  # Directory of .ttf fonts to register with OpenHTMLtoPDF. All *.ttf found here
+  # are embedded. OpenHTMLtoPDF ships NO default fonts, so without at least one
+  # registered font text can disappear from the PDF.
+  fonts-dir: ${FINALIZER_FONTS_DIR:classpath:fonts}
+
+  # Salesforce OAuth client_credentials — Spring Boot authenticates itself so
+  # Apex never needs to pass a session token.
+  #
+  # All secrets come from environment variables (see springboot/.env.example).
+  # NO hardcoded fallbacks here — the service fails fast at startup if a
+  # required env var is missing. The MCP / deploy pipeline supplies them.
+  salesforce-oauth:
+    token-url: ${SF_TOKEN_URL}
+    client-id: ${SF_CLIENT_ID}
+    client-secret: ${SF_CLIENT_SECRET}
+    # How many seconds before expiry to pre-emptively refresh the cached token.
+    refresh-buffer-seconds: ${SF_TOKEN_REFRESH_BUFFER:60}
+
+logging:
+  level:
+    com.dynamicform.pdf: INFO

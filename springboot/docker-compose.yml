@@ -1,0 +1,59 @@
+services:
+
+  pdf-finalizer:
+    image: pdf-finalizer:latest        # loaded from the .tar you scp'd over
+    container_name: pdf-finalizer
+    restart: unless-stopped
+    expose:
+      - "8080"                          # only reachable internally; nginx proxies it
+    environment:
+      # ── API key that Salesforce sends in X-API-Key ──────────────────────────
+      - FINALIZER_API_KEY=${FINALIZER_API_KEY}
+      # ── Salesforce OAuth client_credentials ────────────────────────────────
+      - SF_TOKEN_URL=${SF_TOKEN_URL}
+      - SF_CLIENT_ID=${SF_CLIENT_ID}
+      - SF_CLIENT_SECRET=${SF_CLIENT_SECRET}
+      # ── Optional tuning ────────────────────────────────────────────────────
+      - SF_API_VERSION=${SF_API_VERSION:-61.0}
+      - SF_TOKEN_REFRESH_BUFFER=${SF_TOKEN_REFRESH_BUFFER:-60}
+      - FINALIZER_FONTS_DIR=classpath:fonts
+    mem_limit: 1536m                    # hard cap — protect the 2 GB VPS
+    mem_reservation: 768m
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/api/v1/forms/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - pdf-net
+
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/certbot/conf:/etc/letsencrypt:ro
+      - ./nginx/certbot/www:/var/www/certbot:ro
+    depends_on:
+      - pdf-finalizer
+    networks:
+      - pdf-net
+
+  certbot:
+    image: certbot/certbot:latest
+    container_name: certbot
+    volumes:
+      - ./nginx/certbot/conf:/etc/letsencrypt
+      - ./nginx/certbot/www:/var/www/certbot
+    # The renewal loop is the COMMAND (not entrypoint) so you can still run
+    # `docker compose run --rm certbot certonly ...` to issue the initial cert.
+    command: /bin/sh -c "trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done"
+
+networks:
+  pdf-net:
+    driver: bridge

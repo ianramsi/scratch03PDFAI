@@ -1,10 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
     <label>Default</label>
     <protected>false</protected>
-    <values><field>Scan_Path__c</field><value xsi:type="xsd:string">/webhook/template-scan</value></values>
-    <values><field>Edit_Path__c</field><value xsi:type="xsd:string">/webhook/schema-edit</value></values>
-    <values><field>Finalize_Path__c</field><value xsi:type="xsd:string">/api/v1/forms/finalize</value></values>
-    <values><field>Callout_Timeout_Ms__c</field><value xsi:type="xsd:double">120000</value></values>
-    <values><field>Max_File_Bytes__c</field><value xsi:type="xsd:double">3000000</value></values>
+    <values>
+        <field>Callout_Timeout_Ms__c</field>
+        <value xsi:type="xsd:double">120000.0</value>
+    </values>
+    <values>
+        <field>Edit_Path__c</field>
+        <value xsi:type="xsd:string">/webhook/schema-edit</value>
+    </values>
+    <values>
+        <field>Finalize_Path__c</field>
+        <value xsi:type="xsd:string">/api/v1/forms/finalize</value>
+    </values>
+    <values>
+        <field>Max_File_Bytes__c</field>
+        <value xsi:type="xsd:double">3000000.0</value>
+    </values>
+    <values>
+        <field>Scan_Path__c</field>
+        <value xsi:type="xsd:string">/webhook/template-scan</value>
+    </values>
 </CustomMetadata>

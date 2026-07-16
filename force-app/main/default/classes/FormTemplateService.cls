@@ -215,7 +215,7 @@ public with sharing class FormTemplateService {
         v.status = t.Status__c;
         v.scanStatus = t.Scan_Status__c;
         v.version = (t.Template_Version__c == null) ? 1 : Integer.valueOf(t.Template_Version__c);
-        v.schemaJSON = t.Schema_JSON__c;
+        v.schemaJson = t.Schema_JSON__c;
         v.sourceFileCvId = t.Source_File_CV_Id__c;
         return v;
     }
@@ -336,15 +336,47 @@ public with sharing class FormTemplateService {
                 'prompt'        => prompt
             };
 
+            // DEBUG: confirm the outbound request body is non-null/non-blank
+            // before the callout. Inspect these in the debug log if n8n reports
+            // "Request body must be a JSON object".
+            String requestBody = JSON.serialize(body);
+            System.debug(LoggingLevel.INFO, 'applyAiEdit >> templateId=' + templateId);
+            System.debug(LoggingLevel.INFO, 'applyAiEdit >> prompt=' + prompt);
+            System.debug(LoggingLevel.INFO, 'applyAiEdit >> requestBody isBlank=' + String.isBlank(requestBody)
+                + ' length=' + (requestBody == null ? 0 : requestBody.length()));
+            System.debug(LoggingLevel.INFO, 'applyAiEdit >> requestBody=' + requestBody);
+
+/*
             HttpResponse res = doCallout(
                 'callout:n8n_Form' + settings.Edit_Path__c,
                 JSON.serialize(body),
                 resolveTimeout()
             );
+*/  
+            HttpResponse res = doCallout(
+                'https://n3n3n.suplo.my.id/webhook/schema-edit', 
+                 requestBody, 
+                 resolveTimeout()
+            );
+
+            // DEBUG: confirm what n8n returned (status + raw body).
+            System.debug(LoggingLevel.INFO, 'applyAiEdit << HTTP ' + res.getStatusCode());
+            System.debug(LoggingLevel.INFO, 'applyAiEdit << responseBody=' + res.getBody());
+
 
             if (res.getStatusCode() < 200 || res.getStatusCode() >= 300) {
                 throw new FormCalloutException('INTERNAL',
                     'n8n edit returned HTTP ' + res.getStatusCode());
+            }
+
+            // An empty 2xx body means n8n aborted before reaching a Respond node
+            // (e.g. the Claude call or a Code node threw). Fail with a clear
+            // message instead of a cryptic JSON "end of input" parse error.
+            if (String.isBlank(res.getBody())) {
+                throw new FormCalloutException('INTERNAL',
+                    'n8n edit returned HTTP ' + res.getStatusCode()
+                    + ' with an empty body. The workflow likely errored before its '
+                    + 'Respond to Webhook node (check the Call Claude node / n8n execution log).');
             }
 
             // Parse contract response { status, schema, changes, error }.
@@ -388,8 +420,12 @@ public with sharing class FormTemplateService {
     public static HttpResponse doCallout(String endpoint, String jsonBody, Integer timeoutMs) {
         HttpRequest req = new HttpRequest();
         req.setEndpoint(endpoint);
+
+        String credentials = EncodingUtil.base64Encode(Blob.valueOf('n3n:Kampret#1.')); //temporary hardcoded credentials for MVP simplicity. Need to remove in production.
+        
         req.setMethod('POST');
         req.setHeader('Content-Type', 'application/json');
+        req.setHeader('Authorization', 'Basic '+credentials); // create this statement to accomodate credentials.
         req.setTimeout(timeoutMs);
         req.setBody(jsonBody);
         return new Http().send(req);

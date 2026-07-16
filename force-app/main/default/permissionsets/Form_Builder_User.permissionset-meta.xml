@@ -68,11 +68,6 @@
         <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
-        <field>Form_Template__c.Status__c</field>
-        <readable>true</readable>
-        <editable>true</editable>
-    </fieldPermissions>
-    <fieldPermissions>
         <field>Form_Template__c.Orientation__c</field>
         <readable>true</readable>
         <editable>true</editable>
@@ -129,6 +124,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <field>Form_Submission__c.Final_PDF_CV_Id__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Form_Submission__c.PDF_Status__c</field>
         <readable>true</readable>
         <editable>true</editable>
     </fieldPermissions>

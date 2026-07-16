@@ -1,4 +1,4 @@
-# This file is used for Git repositories to specify intentionally untracked files that Git should ignore. 
+# This file is used for Git repositories to specify intentionally untracked files that Git should ignore.
 # If you are not using git, you can delete this file. For more information see: https://git-scm.com/docs/gitignore
 # For useful gitignore templates see: https://github.com/github/gitignore
 
@@ -25,6 +25,11 @@ yarn-error.log*
 node_modules/
 .roo/
 .roomodes
+scripts
+.claude/
+.kiro/
+.vscode/
+.husky/
 
 # ApexPMD cache
 .pmdCache
@@ -43,6 +48,8 @@ $RECYCLE.BIN/
 
 # Local environment variables
 .env
+springboot/.env
+n8n/.env
 
 # Python Salesforce Functions
 **/__pycache__/
@@ -52,3 +59,37 @@ $RECYCLE.BIN/
 # Salesforce File Sample
 hello.apex
 account.soql
+
+# Spring Boot / Docker — secrets and build artifacts
+springboot/target/
+springboot/*.tar
+springboot/deploy/*.tar
+springboot/pdf-finalizer.tar
+springboot/root@supdf.suplo.my.id
+
+# ──────────────────────────────────────────────────────────────────
+# n8n — auto-generated JSON exports (source of truth is the .ts file)
+# Regenerate from .ts via n8n MCP (validate_workflow + update_workflow).
+# ──────────────────────────────────────────────────────────────────
+n8n/workflows/*.json
+
+# ──────────────────────────────────────────────────────────────────
+# Documentation (exclude ALL markdown files from git)
+# Hand-off notes, planning docs, session logs, etc. live in the
+# repo for the team's reference but should NOT be public.
+# ──────────────────────────────────────────────────────────────────
+*.md
+
+# ──────────────────────────────────────────────────────────────────
+# Empty Salesforce metadata folders (no files → nothing to commit)
+# Git doesn't track empty dirs, but the entries below make the
+# intent explicit and silence `git status` noise.
+# ──────────────────────────────────────────────────────────────────
+force-app/main/default/applications/
+force-app/main/default/aura/
+force-app/main/default/flexipages/
+force-app/main/default/layouts/
+force-app/main/default/staticresources/
+force-app/main/default/tabs/
+force-app/main/default/triggers/
+force-app/main/default/contentassets/

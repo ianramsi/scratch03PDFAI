@@ -34,6 +34,18 @@ import revertToDraft from '@salesforce/apex/FormTemplateService.revertToDraft';
 const POLL_INTERVAL_MS = 2500;
 const POLL_MAX_TRIES = 48; // ~2 minutes ceiling
 
+// Scripted log steps shown while the async scan runs. Delays are absolute
+// (ms from scan start); the real completion line is appended by pollOnce.
+const SCAN_LOG_STEPS = [
+    { delay: 300, text: 'Connecting to Lori AI Vision scan service via n8n...', cls: 'log-line log-line--info' },
+    { delay: 1000, text: 'Uploading document for analysis...', cls: 'log-line log-line--info' },
+    { delay: 1800, text: 'Document received -- queuing for Vision model...', cls: 'log-line log-line--info' },
+    { delay: 2800, text: 'Model analyzing form structure...', cls: 'log-line log-line--info' },
+    { delay: 4200, text: 'Detecting sections and column headers...', cls: 'log-line log-line--info' },
+    { delay: 5800, text: 'Extracting field labels and types...', cls: 'log-line log-line--info' },
+    { delay: 7600, text: 'Building hierarchical template schema...', cls: 'log-line log-line--info' }
+];
+
 export default class TemplateBuilder extends LightningElement {
     @api recordId;        // on a Form_Template__c record page
     @api templateId;      // or explicit (app page)
@@ -48,9 +60,15 @@ export default class TemplateBuilder extends LightningElement {
     isBusy = false;
     error;
 
+    @track logLines = [];  // terminal-style scan log lines
+    showScanLog = false;   // panel visibility (outlives isScanning briefly)
+
     _pollTries = 0;
     _pollTimer;
     _loaded = false;       // guard: load template state only once
+    _logTimers = [];
+    _logSeq = 0;
+    _logScrollPending = false;
 
     get effectiveId() {
         return this.templateId || this.recordId;
@@ -72,6 +90,12 @@ export default class TemplateBuilder extends LightningElement {
     renderedCallback() {
         // Covers the common case where recordId arrives after connectedCallback.
         this.maybeLoad();
+        // Keep the scan log scrolled to the newest line.
+        if (this._logScrollPending) {
+            this._logScrollPending = false;
+            const panel = this.refs.scanLog;
+            if (panel) panel.scrollTop = panel.scrollHeight;
+        }
     }
 
     /** Load template state exactly once, as soon as an id is available. */
@@ -83,6 +107,7 @@ export default class TemplateBuilder extends LightningElement {
 
     disconnectedCallback() {
         this.stopPolling();
+        this._clearLogTimers();
     }
 
     /** Fetch fresh template state (uncached) and apply it. */
@@ -106,15 +131,21 @@ export default class TemplateBuilder extends LightningElement {
         // Defensive parse: surface a parse failure instead of silently leaving
         // the manual-edit/preview panels hidden (hasSchema would stay false).
         const schemaStr = v.schemaJson != null ? v.schemaJson : v.schemaJSON;
-        if (v.schemaStr) {
+        if (schemaStr) {
             try {
-                this.schema = JSON.parse(v.schemaStr);
+                this.schema = JSON.parse(schemaStr);
             } catch (e) {
                 this.schema = null;
                 this.error = 'Schema JSON could not be parsed: ' + e.message;
             }
         } else {
             this.schema = null;
+        }
+        // If we (re)loaded while a scan is already in flight (e.g. page refresh
+        // mid-scan), resume the log animation and polling.
+        if (this.isScanning && !this._pollTimer) {
+            this._startScanLog();
+            this.startPolling();
         }
     }
 
@@ -151,8 +182,45 @@ export default class TemplateBuilder extends LightningElement {
         await this.run(async () => {
             await startScan({ templateId: this.effectiveId, contentVersionId });
             this.scanStatus = 'Processing';
+            this._startScanLog();
             this.startPolling();
         }, 'Scan started');
+    }
+
+    // ---- scan log (terminal-style progress animation) ---------------------
+    // The scan itself is async (n8n callback + polling), so the scripted
+    // steps are cosmetic pacing; only the final line reflects the real result.
+
+    _startScanLog() {
+        this._clearLogTimers();
+        this.logLines = [];
+        this.showScanLog = true;
+        SCAN_LOG_STEPS.forEach((step) => {
+            this._logTimers.push(
+                setTimeout(() => this._addLog(step.text, step.cls), step.delay)
+            );
+        });
+    }
+
+    _addLog(text, cls) {
+        this.logLines = [...this.logLines, { id: ++this._logSeq, text, cls }];
+        this._logScrollPending = true;
+    }
+
+    _clearLogTimers() {
+        this._logTimers.forEach((t) => clearTimeout(t));
+        this._logTimers = [];
+    }
+
+    /** Append the real outcome line and (on success) fade the panel away. */
+    _finishScanLog(ok, message) {
+        this._clearLogTimers();
+        this._addLog(message, ok ? 'log-line log-line--success' : 'log-line log-line--error');
+        if (ok) {
+            // Leave the success line on screen briefly, then hide the panel.
+            this._logTimers.push(setTimeout(() => { this.showScanLog = false; }, 2000));
+        }
+        // On failure the panel stays until the next scan starts.
     }
 
     startPolling() {
@@ -173,7 +241,8 @@ export default class TemplateBuilder extends LightningElement {
         if (this._pollTries > POLL_MAX_TRIES) {
             this.stopPolling();
             this.scanStatus = 'Failed';
-            this.toast('Scan timed out', 'No result received. Check n8n.', 'warning');
+            this._finishScanLog(false, 'Error: scan timed out -- no result received from n8n.');
+            this.toast('Scan timed out', 'No result received. Check LKS Vision.', 'warning');
             return;
         }
         try {
@@ -182,15 +251,34 @@ export default class TemplateBuilder extends LightningElement {
             if (v.scanStatus === 'Success') {
                 this.stopPolling();
                 this.applyView(v);
+                const c = this._schemaCounts();
+                this._finishScanLog(true,
+                    `Schema extraction complete -- ${c.sections} section${c.sections === 1 ? '' : 's'}, ${c.fields} field${c.fields === 1 ? '' : 's'} identified`);
                 this.toast('Scan complete', 'Schema extracted.', 'success');
             } else if (v.scanStatus === 'Failed') {
                 this.stopPolling();
+                this._finishScanLog(false, 'Error: Vision could not extract a schema from the document.');
                 this.toast('Scan failed', 'Vision could not extract a schema.', 'error');
+            } else if (this._pollTries % 4 === 0) {
+                // Every ~10s of real waiting, reassure that we're still on it.
+                const secs = Math.round((this._pollTries * POLL_INTERVAL_MS) / 1000);
+                this._addLog(`Still analyzing... (${secs}s elapsed)`, 'log-line log-line--muted');
             }
         } catch (e) {
             this.stopPolling();
+            this._finishScanLog(false, 'Error: ' + reduceErrors(e).join(', '));
             this.toast('Polling error', reduceErrors(e).join(', '), 'error');
         }
+    }
+
+    _schemaCounts() {
+        let sections = 0, fields = 0;
+        if (this.hasSchema) {
+            sections = this.schema.sections.length;
+            this.schema.sections.forEach((sec) =>
+                (sec.rows || []).forEach((row) => { fields += (row.fields || []).length; }));
+        }
+        return { sections, fields };
     }
 
     // ===================================================================

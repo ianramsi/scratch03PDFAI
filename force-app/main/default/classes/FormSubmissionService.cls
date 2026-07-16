@@ -242,12 +242,12 @@ public with sharing class FormSubmissionService {
             FormStateMachine.approve(submissionId, UserInfo.getUserId());
 
             // === PHASE 2: FINALIZE PDF ===
-            // After the Approved transition commits, enqueue the Spring Boot
-            // finalize callout (build payload from schema + Data_JSON +
-            // signature ContentVersion ids, POST to callout:springboot_Form +
-            // Finalize_Path__c, store returned pdfContentVersionId + documentHash
-            // on the submission). Deferred until Spring Boot exists.
-            // Implementation will mirror FormScanQueueable (Queueable + callout).
+            // The Approved transition has committed. Enqueue the async PDF generation.
+            // FormFinalizeQueueable loads schema + data + signature CV ids, POSTs to
+            // callout:springboot_Form + Finalize_Path__c, and saves the returned
+            // Final_PDF_CV_Id__c + Document_Hash__c. PDF_Status__c tracks progress
+            // (Pending → Success | Failed) so a failure can be retried without re-approving.
+            System.enqueueJob(new FormFinalizeQueueable(submissionId));
         } catch (FormCalloutException fce) {
             throw new AuraHandledException(fce.getMessage());
         } catch (Exception e) {

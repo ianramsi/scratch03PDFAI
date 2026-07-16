@@ -1,4 +1,64 @@
 :host { display: block; }
+
+/* ---- scan log (terminal-style progress) ---- */
+.scan-log {
+    background: #16181d;
+    border: 1px solid #2b2f36;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem 0.75rem;
+    max-height: 14rem;
+    overflow-y: auto;
+    font-family: Consolas, Menlo, Monaco, 'Courier New', monospace;
+    font-size: 0.75rem;
+    line-height: 1.5;
+}
+.scan-log__header {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding-bottom: 0.4rem;
+    margin-bottom: 0.4rem;
+    border-bottom: 1px solid #2b2f36;
+}
+.scan-log__dot {
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+}
+.scan-log__dot--red { background: #ff5f57; }
+.scan-log__dot--yellow { background: #febc2e; }
+.scan-log__dot--green { background: #28c840; }
+.scan-log__title {
+    margin-left: 0.35rem;
+    color: #8a919c;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+}
+.log-line {
+    white-space: pre-wrap;
+    word-break: break-word;
+    animation: log-line-in 0.25s ease-out;
+}
+.log-line--info { color: #9ecbff; }
+.log-line--info::before { content: '> '; color: #5a6470; }
+.log-line--muted { color: #6b7480; font-style: italic; }
+.log-line--muted::before { content: '> '; color: #444c57; }
+.log-line--success { color: #4ade80; font-weight: 600; }
+.log-line--success::before { content: '\2713  '; }
+.log-line--error { color: #f87171; font-weight: 600; }
+.log-line--error::before { content: '\2717  '; }
+.log-line--cursor {
+    color: #9ecbff;
+    animation: cursor-blink 1s step-end infinite;
+}
+@keyframes log-line-in {
+    from { opacity: 0; transform: translateY(3px); }
+    to { opacity: 1; transform: none; }
+}
+@keyframes cursor-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
 .sig-placeholder {
     border: 1px dashed var(--slds-g-color-border-base-1, #c9c9c9);
     border-radius: 4px;

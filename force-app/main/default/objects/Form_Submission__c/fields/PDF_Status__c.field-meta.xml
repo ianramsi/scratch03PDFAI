@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>PDF_Status__c</fullName>
+    <type>Picklist</type>
+    <label>PDF Status</label>
+    <description>Tracks finalization state of the approved PDF. Pending = enqueued, Success = PDF in Final_PDF_CV_Id__c, Failed = generation failed (retryable without re-approving).</description>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Pending</fullName><default>false</default><label>Pending</label></value>
+            <value><fullName>Success</fullName><default>false</default><label>Success</label></value>
+            <value><fullName>Failed</fullName><default>false</default><label>Failed</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

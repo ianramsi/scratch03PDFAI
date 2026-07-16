@@ -28,10 +28,20 @@
                         record-id={effectiveId}
                         onuploadfinished={handleUploadFinished}>
                     </lightning-file-upload>
-                    <template lwc:if={isScanning}>
-                        <div class="slds-m-top_x-small slds-text-color_weak">
-                            <lightning-spinner alternative-text="Scanning" size="x-small"></lightning-spinner>
-                            Scanning&#8230; (waiting for Vision via n8n)
+                    <template lwc:if={showScanLog}>
+                        <div class="scan-log slds-m-top_x-small" lwc:ref="scanLog" role="log" aria-live="polite">
+                            <div class="scan-log__header">
+                                <span class="scan-log__dot scan-log__dot--red"></span>
+                                <span class="scan-log__dot scan-log__dot--yellow"></span>
+                                <span class="scan-log__dot scan-log__dot--green"></span>
+                                <span class="scan-log__title">LORI AI VISION SCAN</span>
+                            </div>
+                            <template for:each={logLines} for:item="line">
+                                <div key={line.id} class={line.cls}>{line.text}</div>
+                            </template>
+                            <template lwc:if={isScanning}>
+                                <div class="log-line log-line--cursor">&#9611;</div>
+                            </template>
                         </div>
                     </template>
                 </div>
