@@ -26,16 +26,27 @@ finalizer:
   # registered font text can disappear from the PDF.
   fonts-dir: ${FINALIZER_FONTS_DIR:classpath:fonts}
 
-  # Salesforce OAuth client_credentials — Spring Boot authenticates itself so
-  # Apex never needs to pass a session token.
+  # Salesforce OAuth — two flows supported, selected by SF_AUTH_TYPE.
+  #
+  #   client_credentials (default): Connected App must have Client Credentials
+  #     Flow enabled with a "Run As" user. Requires SF_CLIENT_SECRET.
+  #
+  #   jwt: Connected App must have "Use digital signatures" enabled with the
+  #     matching public certificate uploaded. Requires SF_JWT_USERNAME,
+  #     SF_JWT_AUDIENCE and SF_JWT_PRIVATE_KEY. No client secret is sent.
   #
   # All secrets come from environment variables (see springboot/.env.example).
   # NO hardcoded fallbacks here — the service fails fast at startup if a
   # required env var is missing. The MCP / deploy pipeline supplies them.
   salesforce-oauth:
+    auth-type: ${SF_AUTH_TYPE:client_credentials}
     token-url: ${SF_TOKEN_URL}
     client-id: ${SF_CLIENT_ID}
-    client-secret: ${SF_CLIENT_SECRET}
+    client-secret: ${SF_CLIENT_SECRET:}
+    # JWT-bearer-only fields (ignored when auth-type=client_credentials).
+    jwt-username: ${SF_JWT_USERNAME:}
+    jwt-audience: ${SF_JWT_AUDIENCE:}
+    jwt-private-key: ${SF_JWT_PRIVATE_KEY:}
     # How many seconds before expiry to pre-emptively refresh the cached token.
     refresh-buffer-seconds: ${SF_TOKEN_REFRESH_BUFFER:60}
 

@@ -44,6 +44,14 @@
             <version>${openhtmltopdf.version}</version>
         </dependency>
 
+        <!-- JWT signing for the Salesforce OAuth JWT bearer flow.
+             Required when SF_AUTH_TYPE=jwt (Connected App uses digital signatures). -->
+        <dependency>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>nimbus-jose-jwt</artifactId>
+            <version>9.40</version>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
