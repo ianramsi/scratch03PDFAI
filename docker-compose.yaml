@@ -1,0 +1,29 @@
+services:
+  # Spring Boot PDF Finalizer.
+  # NOTE: This compose is for the VPS deploy via Hostinger MCP.
+  # It does NOT include nginx/certbot — the existing Caddy in
+  # the `telegram-byoc-connector` project handles SSL on :80/:443
+  # and reverse-proxies `/api/v1/forms/` to this container.
+  pdf-finalizer:
+    build: ./springboot
+    image: pdf-finalizer:latest
+    container_name: pdf-finalizer
+    restart: unless-stopped
+    env_file:
+      - .env
+    expose:
+      - "8080"                          # internal only — Caddy proxies it
+    mem_limit: 1536m                    # hard cap — protect the 2 GB VPS
+    mem_reservation: 768m
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/api/v1/forms/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - pdf-finalizer-net
+
+networks:
+  pdf-finalizer-net:
+    driver: bridge
