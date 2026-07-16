@@ -22,15 +22,22 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * Salesforce REST client for the finalize flow.
  *
- * <p><b>Auth: OAuth 2.0 client_credentials.</b> Spring Boot authenticates itself
- * to Salesforce so Apex never has to pass a session token in the request body.
- * The token is obtained once and cached; it is pre-emptively refreshed
+ * <p><b>Auth: OAuth 2.0 — two flows supported, selected by {@code SF_AUTH_TYPE}:</b>
+ * <ul>
+ *   <li>{@code client_credentials} (default) — Spring Boot authenticates itself
+ *       to Salesforce so Apex never has to pass a session token. Requires the
+ *       Connected App to have <i>Client Credentials Flow</i> enabled with a
+ *       "Run As" user.</li>
+ *   <li>{@code jwt} — JWT bearer flow. The Connected App must have <i>Use digital
+ *       signatures</i> enabled with the matching public certificate uploaded.
+ *       Spring Boot signs a short-lived RS256 assertion with the private key
+ *       and exchanges it for an access token. No client secret is sent.</li>
+ * </ul>
+ *
+ * <p>The token is obtained once and cached; it is pre-emptively refreshed
  * {@code refresh-buffer-seconds} before it expires, so a long-running instance
  * never sends a stale token mid-request. The lock ensures only one thread
  * fetches a new token concurrently.
- *
- * <p>MVP: client_id/secret are in {@code application.yml} (env-var overridable).
- * Move to a secrets manager before production.
  *
  * <p>Responsibilities:
  * <ul>
@@ -51,6 +58,10 @@ public class SalesforceClient {
     private final long refreshBufferSeconds;
     private final RestClient restClient;
 
+    // JWT-bearer-only fields (null when SF_AUTH_TYPE=client_credentials).
+    private final String authType;
+    private final JwtTokenProvider jwtProvider;
+
     // ---------- token cache (thread-safe) ----------
     private final ReentrantLock tokenLock = new ReentrantLock();
     /** Cached access token value. Null means "not yet obtained". */
@@ -62,14 +73,37 @@ public class SalesforceClient {
             @Value("${finalizer.salesforce-api-version:61.0}") String apiVersion,
             @Value("${finalizer.salesforce-oauth.token-url}") String tokenUrl,
             @Value("${finalizer.salesforce-oauth.client-id}") String clientId,
-            @Value("${finalizer.salesforce-oauth.client-secret}") String clientSecret,
-            @Value("${finalizer.salesforce-oauth.refresh-buffer-seconds:60}") long refreshBufferSeconds) {
+            @Value("${finalizer.salesforce-oauth.client-secret:}") String clientSecret,
+            @Value("${finalizer.salesforce-oauth.refresh-buffer-seconds:60}") long refreshBufferSeconds,
+            @Value("${finalizer.salesforce-oauth.auth-type:client_credentials}") String authType,
+            @Value("${finalizer.salesforce-oauth.jwt-username:}") String jwtUsername,
+            @Value("${finalizer.salesforce-oauth.jwt-audience:}") String jwtAudience,
+            @Value("${finalizer.salesforce-oauth.jwt-private-key:}") String jwtPrivateKey) {
         this.apiVersion = apiVersion;
         this.tokenUrl = tokenUrl;
         this.clientId = clientId;
         this.clientSecret = clientSecret;
         this.refreshBufferSeconds = refreshBufferSeconds;
         this.restClient = RestClient.builder().build();
+        this.authType = authType == null ? "client_credentials" : authType.trim().toLowerCase();
+
+        if ("jwt".equals(this.authType)) {
+            if (jwtUsername == null || jwtUsername.isBlank()
+                    || jwtAudience == null || jwtAudience.isBlank()
+                    || jwtPrivateKey == null || jwtPrivateKey.isBlank()) {
+                throw new IllegalStateException(
+                        "SF_AUTH_TYPE=jwt requires SF_JWT_USERNAME, SF_JWT_AUDIENCE and SF_JWT_PRIVATE_KEY.");
+            }
+            this.jwtProvider = new JwtTokenProvider(clientId, jwtUsername, jwtAudience, jwtPrivateKey);
+            log.info("Salesforce auth: JWT bearer flow (user={}, aud={}).", jwtUsername, jwtAudience);
+        } else {
+            this.jwtProvider = null;
+            if (clientSecret == null || clientSecret.isBlank()) {
+                throw new IllegalStateException(
+                        "SF_AUTH_TYPE=client_credentials requires SF_CLIENT_SECRET.");
+            }
+            log.info("Salesforce auth: client_credentials flow.");
+        }
     }
 
     // ---------------------------------------------------------------
@@ -173,11 +207,19 @@ public class SalesforceClient {
 
     @SuppressWarnings("unchecked")
     private String fetchNewToken() {
-        log.info("Fetching Salesforce OAuth token from {}.", tokenUrl);
+        log.info("Fetching Salesforce OAuth token from {} (flow={}).", tokenUrl, authType);
         MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
-        form.add("grant_type", "client_credentials");
-        form.add("client_id", clientId);
-        form.add("client_secret", clientSecret);
+
+        if ("jwt".equals(authType)) {
+            // JWT bearer flow: sign a short-lived RS256 assertion, exchange for token.
+            form.add("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer");
+            form.add("assertion", jwtProvider.buildAssertion());
+        } else {
+            // client_credentials flow.
+            form.add("grant_type", "client_credentials");
+            form.add("client_id", clientId);
+            form.add("client_secret", clientSecret);
+        }
 
         try {
             Map<String, Object> resp = restClient.post()
@@ -192,8 +234,8 @@ public class SalesforceClient {
                         "Salesforce token endpoint returned no access_token.");
             }
             String token = String.valueOf(resp.get("access_token"));
-            // Salesforce client_credentials tokens typically expire in 7200s (2h).
-            // Use the returned expires_in when present, else default to 7200.
+            // Salesforce tokens typically expire in 7200s (2h) for client_credentials
+            // and 30 min for JWT bearer. Use the returned expires_in when present.
             long expiresIn = 7200L;
             if (resp.get("expires_in") instanceof Number n) {
                 expiresIn = n.longValue();
